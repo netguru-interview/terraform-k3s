@@ -1,0 +1,29 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+    name: traefik-dashboard
+    namespace: default
+spec:
+    routes:
+        - match: Host(`dash.${domain}`)
+          kind: Rule
+          services:
+              - name: api@internal
+                kind: TraefikService
+    tls:
+        secretName: live-http01-cert
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+    name: live-http01-cert
+    namespace: default
+spec:
+    commonName: dash.${domain}
+    secretName: live-http01-cert
+    dnsNames:
+        - dash.${domain}
+    issuerRef:
+        name: letsencrypt-test
+        kind: ClusterIssuer

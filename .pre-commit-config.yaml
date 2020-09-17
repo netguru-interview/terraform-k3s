@@ -1,0 +1,24 @@
+---
+repos:
+    - repo: git://github.com/pre-commit/pre-commit-hooks
+      rev: v3.1.0
+      hooks:
+          - id: check-byte-order-marker
+          - id: check-executables-have-shebangs
+          - id: check-merge-conflict
+          - id: end-of-file-fixer
+          - id: mixed-line-ending
+          - id: trailing-whitespace
+            args: [--markdown-linebreak-ext=md]
+    - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+      rev: 0.0.11
+      hooks:
+          - id: yamlfmt
+    - repo: git://github.com/adrienverge/yamllint
+      rev: v1.24.2
+      hooks:
+          - id: yamllint
+            files: \.(yaml|yml)$
+            types: [file, yaml]
+            exclude: service/k3s/templates/flannel.yaml
+            entry: yamllint --strict
