@@ -212,6 +212,12 @@ resource "null_resource" "k3s" {
     destination = "/tmp/basic-traefik-test.yaml"
   }
 
+  # Upload argocd ingress
+  provisioner "file" {
+    content     = data.template_file.argocd-ingress.rendered
+    destination = "/tmp/argocd-ingress.yaml"
+  }
+
   # Install K3S server
   provisioner "remote-exec" {
     inline = [<<EOT
@@ -252,6 +258,13 @@ resource "null_resource" "k3s" {
         kubectl apply -f /tmp/manifests/traefik-k3s.yaml;
         # Install basic traefik test
         kubectl apply -f /tmp/basic-traefik-test.yaml;
+        # Install helm
+        curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash;
+        # Install ArgoCD
+        kubectl create ns argocd;
+        helm repo add argo https://argoproj.github.io/argo-helm;
+        helm install --kubeconfig /etc/rancher/k3s/k3s.yaml -n argocd latest --set server.ingress.enabled=true --set server.extraArgs="{--insecure}" --set configs.secret.argocdServerAdminPassword='$2b$12$/HRbMqfAsEYC.J7uN7S/LeG0GNs4CsdYDTe6lxKpPmTHI60Q/qcUm' argo/argo-cd;
+        kubectl apply -f /tmp/argocd-ingress.yaml;
 
         echo "[INFO] ---Finished installing k3s server---";
       %{else~}
@@ -351,6 +364,14 @@ data "template_file" "basic-cert-issuer" {
 
 data "template_file" "basic-traefik-test" {
   template = file("${path.module}/templates/basic-traefik-test.yaml")
+
+  vars = {
+    domain = local.domain
+  }
+}
+
+data "template_file" "argocd-ingress" {
+  template = file("${path.module}/templates/argocd-ingress.yaml")
 
   vars = {
     domain = local.domain
